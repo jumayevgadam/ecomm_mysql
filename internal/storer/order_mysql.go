@@ -29,12 +29,10 @@ func (ms *MySQLStorer) CreateOrder(ctx context.Context, o *models.Order) (*model
 
 		return nil
 	}); err != nil {
-		return nil, nil
+		return nil, fmt.Errorf("error performing transaction: %w", err)
 	}
 
-	// commit transaction
-	// rollback transaction if error occur
-	return nil, nil
+	return o, nil
 }
 
 // createOrder method is
@@ -73,6 +71,88 @@ func createOrderItem(ctx context.Context, tx *sqlx.Tx, oi models.OrderItem) erro
 		return fmt.Errorf("error getting last insert id: %w", err)
 	}
 	oi.ID = id
+
+	return nil
+}
+
+// GetOrder method is
+func (ms *MySQLStorer) GetOrder(ctx context.Context, id int64) (*models.Order, error) {
+	var o models.Order
+	if err := ms.DB.GetContext(
+		ctx,
+		&o,
+		"SELECT * FROM orders WHERE id=?",
+		id,
+	); err != nil {
+		return nil, fmt.Errorf("error getting order: %w", err)
+	}
+
+	var items []models.OrderItem
+	if err := ms.DB.SelectContext(
+		ctx,
+		&items,
+		"SELECT * FROM order_items WHERE order_id=?",
+		id,
+	); err != nil {
+		return nil, fmt.Errorf("error getting order items: %w", err)
+	}
+	o.Items = items
+
+	return &o, nil
+}
+
+// ListOrders method is
+func (ms *MySQLStorer) ListOrders(ctx context.Context) ([]models.Order, error) {
+	var orders []models.Order
+	if err := ms.DB.SelectContext(
+		ctx,
+		&orders,
+		"SELECT * FROM orders",
+	); err != nil {
+		return nil, fmt.Errorf("error listing orders: %w", err)
+	}
+
+	for i := range orders {
+		var items []models.OrderItem
+		if err := ms.DB.SelectContext(
+			ctx,
+			&items,
+			"SELECT * FROM order_items WHERE order_id=?",
+			orders[i].ID,
+		); err != nil {
+			return nil, fmt.Errorf("error getting order items: %w", err)
+		}
+		orders[i].Items = items
+	}
+
+	return orders, nil
+}
+
+// DeleteOrder method is
+func (ms *MySQLStorer) DeleteOrder(ctx context.Context, id int64) error {
+	if err := ms.ExecTx(ctx, func(tx *sqlx.Tx) error {
+		_, err := tx.ExecContext(
+			ctx,
+			"DELETE FROM order_items WHERE order_id=?",
+			id,
+		)
+		if err != nil {
+			return fmt.Errorf("error deleting order: %w", err)
+		}
+
+		_, err = tx.ExecContext(
+			ctx,
+			"DELETE FROM orders WHERE id=?",
+			id,
+		)
+		if err != nil {
+			return fmt.Errorf("error deleting order: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error deleting order: %w", err)
+	}
 
 	return nil
 }
