@@ -41,8 +41,8 @@ func (ms *MySQLStorer) GetProduct(ctx context.Context, id int64) (*models.Produc
 	return &p, nil
 }
 
-func (ms *MySQLStorer) ListProducts(ctx context.Context) ([]*models.Product, error) {
-	var products []*models.Product
+func (ms *MySQLStorer) ListProducts(ctx context.Context) ([]models.Product, error) {
+	var products []models.Product
 	if err := ms.DB.SelectContext(
 		ctx,
 		&products,
@@ -57,7 +57,7 @@ func (ms *MySQLStorer) ListProducts(ctx context.Context) ([]*models.Product, err
 func (ms *MySQLStorer) UpdateProduct(ctx context.Context, p *models.Product) (*models.Product, error) {
 	_, err := ms.DB.NamedExecContext(
 		ctx,
-		"UPDATE products SET name=:name, image=:image, category=:category, description=:description, rating=:rating, num_reviews=:num_reviews WHERE id=:id",
+		"UPDATE products SET name=:name, image=:image, category=:category, description=:description, rating=:rating, num_reviews=:num_reviews, updated_at=:updated_at WHERE id=:id",
 		p,
 	)
 	if err != nil {

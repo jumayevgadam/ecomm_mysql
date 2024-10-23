@@ -13,3 +13,7 @@ migration_up:
 .PHONY: docker-run
 docker-run:
 	docker run --name ecomm-mysql -p 3307:3306 -e MYSQL_ROOT_PASSWORD=NewPassword!123 -d mysql:8.4
+
+.PHONY: docker-exec
+docker-exec:
+	docker exec -i ecomm_mysql mysql -uroot -password <<< "CREATE DATABASE ecomm_mysql;"
