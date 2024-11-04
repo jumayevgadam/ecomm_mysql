@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/jumayevgadam/ecomm_mysql/internal/models"
+	"github.com/jumayevgadam/ecomm_mysql/pkg/utils"
 )
 
 // toStorerProduct is
@@ -131,4 +132,48 @@ func toOrderItems(items []models.OrderItem) []OrderItem {
 	}
 
 	return res
+}
+
+// toStorerUser is
+func toStorerUser(u UserReq) *models.User {
+	return &models.User{
+		Name:     u.Name,
+		Email:    u.Email,
+		Password: u.Password,
+		IsAdmin:  u.IsAdmin,
+	}
+}
+
+// toUserRes is
+func toUserRes(u *models.User) UserRes {
+	return UserRes{
+		Name:    u.Name,
+		Email:   u.Email,
+		IsAdmin: u.IsAdmin,
+	}
+}
+
+// patchUserReq is
+func patchUserReq(user *models.User, u UserReq) {
+	if u.Name != "" {
+		user.Name = u.Name
+	}
+
+	if u.Email != "" {
+		user.Email = u.Email
+	}
+
+	if u.Password != "" {
+		hashed, err := utils.HashPassword(u.Password)
+		if err != nil {
+			panic(err)
+		}
+		user.Password = hashed
+	}
+
+	if u.IsAdmin {
+		user.IsAdmin = u.IsAdmin
+	}
+
+	user.UpdatedAt = toTimePtr(time.Now())
 }

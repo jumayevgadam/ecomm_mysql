@@ -33,6 +33,35 @@ func RegisterRoutes(handler *Handler) *chi.Mux {
 		})
 	})
 
+	r.Route("/users", func(r chi.Router) {
+		r.Post("/", handler.CreateUser)
+		r.Get("/", handler.ListUsers)
+		r.Patch("/", handler.UpdateUser)
+
+		r.Route("/{id}", func(r chi.Router) {
+			r.Delete("/", handler.DeleteUser)
+		})
+
+		r.Route("/login", func(r chi.Router) {
+			r.Post("/", handler.LoginUser)
+		})
+
+		r.Route("/logout", func(r chi.Router) {
+			r.Post("/", handler.LogOutUser)
+		})
+
+		r.Route("/tokens", func(r chi.Router) {
+			r.Route("/renew", func(r chi.Router) {
+				r.Post("/", handler.RenewAccessToken)
+			})
+
+			r.Route("/revoke/{id}", func(r chi.Router) {
+				r.Post("/", handler.RevokeSession)
+			})
+		})
+
+	})
+
 	return r
 }
 
